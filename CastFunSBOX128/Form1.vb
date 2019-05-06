@@ -1,16 +1,12 @@
 ﻿Public Class Form1
     Dim discard As List(Of String) = New List(Of String)
-    Dim Afile As IO.StreamWriter = New IO.StreamWriter("a file.txt")
-    Dim roundLoop As Integer
-    Dim shiftStage As Integer = 0
 
 
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
 
-
-        Dim IpTable = Numbers_Generate(128, 1, "ip")
+        Dim IpTable = Numbers_Generate(128, 1)
         Dim SBOX15 = importSBOX()
-        Dim GenerateShiftMatrix = Numbers_Generate(8, 3, "GenerateShiftMatrix", True)
+        Dim GenerateShiftMatrix = Numbers_Generate(8, 3, True)
         Dim InputKey1 As String = InputBox("Chaos parameter R")
         Dim InputKey2 As String = InputBox("Chaos parameter X")
         Dim chaosGenerateSTR = Join(Chaos_Table(InputKey1, InputKey2), "").Replace("0.", "")
@@ -19,7 +15,6 @@
         Dim ChaosKey64 = Ip_Procces_Encryption(IpTable, chaosBinary)
 
         Dim Message
-        '  Dim D_MessageAfterIP = ""
 
         Dim left
         Dim right
@@ -27,7 +22,6 @@
 
         Dim Org_Message = readFromFile()
 
-        ' Dim temp
         Dim Rounds As Integer = 15
         Dim encryptBits As String = ""
         Dim encrypt As String = ""
@@ -43,7 +37,6 @@
 
             For i = 0 To Rounds
 
-                'temp = Message
                 right = Mid(Message, 65, 64)
                 left = Mid(Message, 1, 64)
 
@@ -79,7 +72,6 @@
             Message = Mid(encryptBits, j, 128)
 
             For i = 0 To Rounds
-                roundLoop = i
 
                 left = Mid(Message, 65, 64)
                 right = Mid(Message, 1, 64)
@@ -108,13 +100,12 @@
         Catch ex As Exception
             RichTextBox1.Text = Mid(encrypt, 1, 40)
         End Try
-        Afile.Close()
 
     End Sub
 
     Function readFromFile()
         Dim OpenFileDialog1 As OpenFileDialog = New OpenFileDialog()
-        ' OpenFileDialog1.Filter = ".txt"
+
         If Not OpenFileDialog1.ShowDialog = Windows.Forms.DialogResult.OK Then
             Application.Exit()
         End If
@@ -202,8 +193,7 @@
 
 
     Function importSBOX()
-        'OpenFileDialog1.FileName = "SBOXes"
-        'OpenFileDialog1.ShowDialog()
+
         Dim texte As String = System.IO.File.ReadAllText(FileReturnPath())
 
         Dim StrStack(15, 15) As Integer
@@ -363,10 +353,8 @@
     End Function
 
 
-    Function Numbers_Generate(IndexPlusOneArray As Integer, startFrom As Integer, Addres As String, Optional TakeModIndexOfArray As Boolean = False)
-        'IP_Table_Generate
-        'OpenFileDialog1.FileName = Addres
-        'OpenFileDialog1.ShowDialog()
+    Function Numbers_Generate(IndexPlusOneArray As Integer, startFrom As Integer, Optional TakeModIndexOfArray As Boolean = False)
+
         Dim reader As String = System.IO.File.ReadAllText(FileReturnPath())
         Dim E_table(IndexPlusOneArray - 1) As String
         Dim counter As Integer = 0
@@ -489,42 +477,32 @@
     End Function
 
     Function shift_Discard(MyString As String, NumberOfShinftingLoop As Integer, Optional DecryptMode As Boolean = False)
-        Dim temp As String
-        Dim temp2 As String
-        Dim str = ""
+        Dim NewShifted As String
+        Dim ValueThatShifted As String
+        Dim ReplaceShifted = ""
 
         If Not DecryptMode Then
             For i = 1 To NumberOfShinftingLoop
-                str += "1"
+                ReplaceShifted += "1"
             Next
-            temp = Mid(MyString, 1, MyString.Length - NumberOfShinftingLoop) & str
-            temp2 = Mid(MyString, MyString.Length - NumberOfShinftingLoop + 1, NumberOfShinftingLoop)
-            discard.Add(temp2)
-            Afile.WriteLine("E   " & MyString & "    " & temp & "    " & temp2)
+            NewShifted = Mid(MyString, 1, MyString.Length - NumberOfShinftingLoop) & ReplaceShifted
+            ValueThatShifted = Mid(MyString, MyString.Length - NumberOfShinftingLoop + 1, NumberOfShinftingLoop)
+            discard.Add(ValueThatShifted)
 
-            '  MessageBox.Show(MyString & vbLf & temp)
         Else
-            'Return MyString
-            Dim x, y As String
 
-            shiftStage = (discard.Count - 1) Mod 80
-            x = discard.Item(shiftStage)
+            Dim RetriveShifted, PartWithoutShift As String
+
+            Dim shiftStage = (discard.Count - 1) Mod 80
+            RetriveShifted = discard.Item(shiftStage)
             discard.RemoveAt(shiftStage)
-            y = Mid(MyString, 1, MyString.Length - x.Length)
-            temp = y & x
-
-
-            Afile.WriteLine("D   " & MyString & "    " & temp & "    " & x)
-
-            'MessageBox.Show(MyString & vbLf & temp)
+            PartWithoutShift = Mid(MyString, 1, MyString.Length - RetriveShifted.Length)
+            NewShifted = PartWithoutShift & RetriveShifted
 
         End If
 
-
-
-        Return temp
+        Return NewShifted
     End Function
-
 
     Function FileReturnPath()
         Return "bits.txt"
@@ -537,8 +515,6 @@
         B = Mid(str, 17, 16)
         C = Mid(str, 33, 16)
         D = Mid(str, 49, 16)
-        '    Dim temp = ""
-
 
         If Not DecryptMode Then
             A = shift_Discard(A, 13)
