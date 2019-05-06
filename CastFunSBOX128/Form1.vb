@@ -1,5 +1,8 @@
 ﻿Public Class Form1
     Dim discard As List(Of String) = New List(Of String)
+    Dim Afile As IO.StreamWriter = New IO.StreamWriter("a file.txt")
+    Dim roundLoop As Integer
+    Dim shiftStage As Integer = 0
 
 
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
@@ -76,6 +79,8 @@
             Message = Mid(encryptBits, j, 128)
 
             For i = 0 To Rounds
+                roundLoop = i
+
                 left = Mid(Message, 65, 64)
                 right = Mid(Message, 1, 64)
                 right = SerpentMode(right, True)
@@ -96,13 +101,14 @@
         TextBox2.Text = watch.Elapsed.TotalSeconds
         File = New IO.StreamWriter("Decryption.txt")
         File.Write(decryptBits)
+        File.Close()
 
         Try
             RichTextBox1.Text = encrypt
         Catch ex As Exception
             RichTextBox1.Text = Mid(encrypt, 1, 40)
         End Try
-
+        Afile.Close()
 
     End Sub
 
@@ -486,6 +492,7 @@
         Dim temp As String
         Dim temp2 As String
         Dim str = ""
+
         If Not DecryptMode Then
             For i = 1 To NumberOfShinftingLoop
                 str += "1"
@@ -493,16 +500,22 @@
             temp = Mid(MyString, 1, MyString.Length - NumberOfShinftingLoop) & str
             temp2 = Mid(MyString, MyString.Length - NumberOfShinftingLoop + 1, NumberOfShinftingLoop)
             discard.Add(temp2)
+            Afile.WriteLine("E   " & MyString & "    " & temp & "    " & temp2)
+
             '  MessageBox.Show(MyString & vbLf & temp)
         Else
             'Return MyString
             Dim x, y As String
 
-
-            x = discard.Item(discard.Count - 1)
-            discard.RemoveAt(discard.Count - 1)
+            shiftStage = (discard.Count - 1) Mod 80
+            x = discard.Item(shiftStage)
+            discard.RemoveAt(shiftStage)
             y = Mid(MyString, 1, MyString.Length - x.Length)
             temp = y & x
+
+
+            Afile.WriteLine("D   " & MyString & "    " & temp & "    " & x)
+
             'MessageBox.Show(MyString & vbLf & temp)
 
         End If
@@ -528,8 +541,8 @@
 
 
         If Not DecryptMode Then
-            'A = shift_Discard(A, 13)
-            'C = shift_Discard(C, 13)
+            A = shift_Discard(A, 13)
+            C = shift_Discard(C, 13)
 
             B = XorOperation(B, C, 16)
             B = XorOperation(B, A, 16)
@@ -537,13 +550,13 @@
             D = XorOperation(D, shifting(A, 3), 16)
             D = XorOperation(D, C, 16)
 
-            'B = shift_Discard(B, 1)
-            'D = shift_Discard(D, 1)
+            B = shift_Discard(B, 1)
+            D = shift_Discard(D, 1)
 
             A = XorOperation(A, B, 16)
             A = XorOperation(A, D, 16)
 
-            'A = shift_Discard(A, 5)
+            A = shift_Discard(A, 5)
 
             C = XorOperation(C, D, 16)
             C = XorOperation(C, shifting(B, 7), 16)
@@ -553,13 +566,13 @@
 
             C = XorOperation(C, shifting(B, 7), 16)
 
-            'A = shift_Discard(A, 5, True)
+            A = shift_Discard(A, 5, True)
 
             A = XorOperation(A, B, 16)
             A = XorOperation(A, D, 16)
 
-            'D = shift_Discard(D, 1, True)
-            'B = shift_Discard(B, 1, True)
+            D = shift_Discard(D, 1, True)
+            B = shift_Discard(B, 1, True)
 
             D = XorOperation(D, shifting(A, 3), 16)
             D = XorOperation(D, C, 16)
@@ -567,8 +580,8 @@
             B = XorOperation(B, C, 16)
             B = XorOperation(B, A, 16)
 
-            'C = shift_Discard(C, 13, True)
-            'A = shift_Discard(A, 13, True)
+            C = shift_Discard(C, 13, True)
+            A = shift_Discard(A, 13, True)
         End If
 
         Return A + B + C + D
