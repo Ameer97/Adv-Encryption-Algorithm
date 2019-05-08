@@ -7,12 +7,10 @@
         Dim IpTable = Numbers_Generate(128, 1)
         Dim SBOX15 = importSBOX()
         Dim GenerateShiftMatrix = Numbers_Generate(8, 3, True)
+
         Dim InputKey1 As String = InputBox("Chaos parameter R")
         Dim InputKey2 As String = InputBox("Chaos parameter X")
-        Dim chaosGenerateSTR = Join(Chaos_Table(InputKey1, InputKey2), "").Replace("0.", "")
-        Dim chaosReordered128 = Ip_Procces_Encryption(IpTable, Mid(chaosGenerateSTR, 6, 128))
-        Dim chaosBinary = KeySplit(Mid(chaosReordered128, 1, 8))
-        Dim ChaosKey64 = Ip_Procces_Encryption(IpTable, chaosBinary)
+        Dim ChaosKeyArray = ChaosPreProccessing(InputKey1, InputKey2, IpTable, GenerateShiftMatrix)
 
         Dim Message
 
@@ -43,7 +41,7 @@
                 right = SplitAs8(right, SBOX15)
                 left = SplitAs8(left, SBOX15)
 
-                right = XorOperation(right, ChaosKey64, 64)
+                right = XorOperation(right, ChaosKeyArray(i), 64)
                 left = MatrixFormShift(left, GenerateShiftMatrix)
 
                 right = SerpentMode(right)
@@ -77,7 +75,7 @@
                 right = Mid(Message, 1, 64)
                 right = SerpentMode(right, True)
 
-                right = XorOperation(right, ChaosKey64, 64)
+                right = XorOperation(right, ChaosKeyArray(Rounds - i), 64)
                 left = MatrixFormShift(left, GenerateShiftMatrix, True)
 
                 right = D_SplitSBOX(right, SBOX15)     'Decrypt
@@ -155,7 +153,7 @@
         Return stored
     End Function
 
-    Function KeySplit(keySTR As String)
+    Function ToBinaray(keySTR As String)
 
         Dim spliter As String = ""
         Dim AscValue As Integer = 0
@@ -425,6 +423,27 @@
         Next
         SplitString = TempArray   'actually return the value
     End Function
+
+    Function ChaosPreProccessing(R As String, x As String, InitialPremetaion() As String, shiftMatrix() As String)
+        Dim ChaosKeyArray(15)
+        Dim chaosGenerateSTR = Join(Chaos_Table(R, x), "").Replace("0.", "")
+
+
+        Dim chaosBinary As String
+        Dim chaosReordered128
+        Dim c
+        Dim m
+
+        For i = 0 To 15
+            m = shiftMatrix(i Mod (shiftMatrix.Length - 1))
+            c = Mid(chaosGenerateSTR, m * 100, 128)
+            chaosReordered128 = Ip_Procces_Encryption(InitialPremetaion, c)
+            chaosBinary = ToBinaray(Mid(chaosReordered128, 1, 8))
+            ChaosKeyArray(i) = Ip_Procces_Encryption(InitialPremetaion, chaosBinary)
+        Next
+        Return ChaosKeyArray
+    End Function
+
 
     Function Chaos_Table(InputKeyR As String, InputKeyX As String) As String()
         Dim x(1000) As Double
